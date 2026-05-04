@@ -17,8 +17,8 @@ public class FirebaseStorageService : IFirebaseStorageService
 {
     private readonly StorageClient _storageClient;
     private readonly ILogger<FirebaseStorageService> _logger;
-    private readonly string _bucketName = "skillshare-flutter-da4ad.appspot.com";
-    private readonly string _storageUrl = "https://firebasestorage.googleapis.com/v0/b/skillshare-flutter-da4ad.appspot.com/o/";
+    private readonly string _bucketName = "skillshare-3a18c.firebasestorage.app";
+    private readonly string _storageUrl = "https://firebasestorage.googleapis.com/v0/b/skillshare-3a18c.firebasestorage.app/o/";
     private readonly HttpClient _httpClient;
 
     public FirebaseStorageService(IConfiguration configuration, ILogger<FirebaseStorageService> logger)
@@ -34,8 +34,8 @@ public class FirebaseStorageService : IFirebaseStorageService
             _logger.LogInformation("🚀 Initializing Firebase Storage Service...");
             _logger.LogInformation($"📦 Bucket: {_bucketName}");
 
-            // EL PROBLEMA: La configuración de Firebase puede no estar correcta
-            var firebaseConfigJson = configuration["Firebase:Config"];
+            var firebaseConfigJson = configuration["GOOGLE_APPLICATION_CREDENTIALS_JSON"] 
+                                     ?? configuration["Firebase:Config"];
         
             if (!string.IsNullOrEmpty(firebaseConfigJson))
             {
@@ -98,20 +98,12 @@ public class FirebaseStorageService : IFirebaseStorageService
                 bucket: _bucketName,
                 objectName: objectName,
                 contentType: GetContentType(fileExtension),
-                source: stream,
-                options: new UploadObjectOptions
-                {
-                    PredefinedAcl = PredefinedObjectAcl.PublicRead // Para acceso público
-                }
+                source: stream
+
             );
 
-            // Construir URL de descarga pública
-            var downloadUrl = $"{_storageUrl}{Uri.EscapeDataString(objectName)}?alt=media";
-            
-            _logger.LogInformation($"✅ File uploaded successfully!");
-            _logger.LogInformation($"🔗 Download URL: {downloadUrl}");
-            
-            return downloadUrl;
+// Retornamos la URL con el formato correcto para Firebase
+            return $"{_storageUrl}{Uri.EscapeDataString(objectName)}?alt=media";
         }
         catch (Exception ex)
         {
