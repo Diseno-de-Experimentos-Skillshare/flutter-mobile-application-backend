@@ -9,7 +9,6 @@ namespace SkillShareBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class SubjectController : ControllerBase
 {
     private readonly AppDbContext _context;

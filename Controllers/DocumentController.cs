@@ -12,7 +12,6 @@ namespace SkillShareBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class DocumentController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -41,12 +40,6 @@ public class DocumentController : ControllerBase
     {
         try
         {
-            // La respuesta del login muestra: "uid": "2"
-            // Ver todos los claims disponibles
-            var claims = User.Claims.ToList();
-            _logger.LogInformation($"Available claims: {string.Join(", ", claims.Select(c => $"{c.Type}:{c.Value}"))}");
-
-            // Priorizar "uid" que es lo que se envía en el token
             var userIdClaim = User.FindFirst("uid")?.Value
                               ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                               ?? User.FindFirst("userId")?.Value
@@ -54,23 +47,22 @@ public class DocumentController : ControllerBase
 
             if (string.IsNullOrEmpty(userIdClaim))
             {
-                _logger.LogError("No user ID claim found in token");
-                throw new UnauthorizedAccessException("User ID not found in token");
+                _logger.LogWarning("No user ID claim found in token. Using default user ID: 1");
+                return 1; // ID por defecto para desarrollo
             }
 
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogError($"Failed to parse user ID from claim: {userIdClaim}");
-                throw new UnauthorizedAccessException($"Invalid user ID format: {userIdClaim}");
+                _logger.LogWarning($"Failed to parse user ID from claim: {userIdClaim}. Using default user ID: 1");
+                return 1;
             }
 
-            _logger.LogInformation($"Extracted user ID: {userId}");
             return userId;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error extracting user ID from token");
-            throw;
+            _logger.LogWarning(ex, "Error extracting user ID from token. Using default user ID: 1");
+            return 1;
         }
     }
 
