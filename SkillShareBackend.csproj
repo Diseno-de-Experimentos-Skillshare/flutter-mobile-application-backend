@@ -6,6 +6,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <!-- CRÍTICO: Esto evita que el backend compile los archivos de la carpeta Test -->
+    <ItemGroup>
+        <Compile Remove="Test\**" />
+        <Content Remove="Test\**" />
+        <EmbeddedResource Remove="Test\**" />
+        <None Remove="Test\**" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
@@ -27,7 +35,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="wwwroot\uploads\documents\" />
+        <Folder Include="wwwroot\uploads\documents\" />
     </ItemGroup>
 
 </Project>
