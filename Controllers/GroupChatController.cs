@@ -6,12 +6,14 @@ using SkillShareBackend.Data;
 using SkillShareBackend.DTOs;
 using SkillShareBackend.Models;
 using SkillShareBackend.Services;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace SkillShareBackend.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/groups/{groupId}/chat")]
-public class GroupChatController : ControllerBase
+public class GroupChatController : BaseController
 {
     private readonly AppDbContext _context;
     private readonly IFileStorageService _fileStorage;
@@ -22,13 +24,6 @@ public class GroupChatController : ControllerBase
         _fileStorage = fileStorage;
     }
 
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                        ?? User.FindFirst("uid")?.Value;
-        return int.TryParse(userIdClaim, out var userId) ? userId : 1; // Default to 1
-    }
-
     // GET: api/groups/{groupId}/chat/messages
     [HttpGet("messages")]
     public async Task<ActionResult<IEnumerable<GroupMessageDto>>> GetMessages(
@@ -36,7 +31,7 @@ public class GroupChatController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         // Verify user is a member
@@ -109,7 +104,7 @@ public class GroupChatController : ControllerBase
         int groupId,
         [FromBody] SendMessageDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         Console.WriteLine($"💬 SendMessage - GroupId: {groupId}, UserId: {userId}, Type: {dto.MessageType}");
@@ -264,7 +259,7 @@ public class GroupChatController : ControllerBase
         int messageId,
         [FromBody] UpdateMessageDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         var message = await _context.GroupMessages
@@ -291,7 +286,7 @@ public class GroupChatController : ControllerBase
     [HttpDelete("messages/{messageId}")]
     public async Task<IActionResult> DeleteMessage(int groupId, int messageId)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         var message = await _context.GroupMessages
@@ -324,7 +319,7 @@ public class GroupChatController : ControllerBase
         int messageId,
         [FromBody] AddReactionDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         var message = await _context.GroupMessages
@@ -378,7 +373,7 @@ public class GroupChatController : ControllerBase
         int messageId,
         int reactionId)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         var reaction = await _context.MessageReactions
@@ -400,7 +395,7 @@ public class GroupChatController : ControllerBase
     [HttpPost("messages/{messageId}/read")]
     public async Task<IActionResult> MarkAsRead(int groupId, int messageId)
     {
-        var userId = GetCurrentUserId();
+        var userId = GetUserId();
         if (userId == 0) return Unauthorized();
 
         var message = await _context.GroupMessages

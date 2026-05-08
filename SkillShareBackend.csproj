@@ -24,7 +24,6 @@
         <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
         <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
         <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
     </ItemGroup>
 
     <ItemGroup>

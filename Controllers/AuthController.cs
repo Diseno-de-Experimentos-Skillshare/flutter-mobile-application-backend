@@ -82,6 +82,7 @@ public class AuthController : ControllerBase
     /// This endpoint is protected by authentication middleware.
     /// If request reaches here, token is valid.
     /// </summary>
+    [Authorize]
     [HttpGet("validate-token")]
     public IActionResult ValidateToken()
     {

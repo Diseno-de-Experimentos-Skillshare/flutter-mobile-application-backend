@@ -5,9 +5,10 @@ using SkillShareBackend.Services;
 
 namespace SkillShareBackend.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class CallsController : ControllerBase
+public class CallsController : BaseController
 {
     private readonly ICallService _callService;
 
@@ -21,8 +22,10 @@ public class CallsController : ControllerBase
     {
         try
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
-            var result = await _callService.CreateCallRoom(request.GroupId, userIdStr);
+            var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var result = await _callService.CreateCallRoom(request.GroupId, userId.ToString());
             
             if (result.Success)
             {
@@ -43,8 +46,10 @@ public class CallsController : ControllerBase
     {
         try
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
-            var result = await _callService.JoinCall(request.GroupId, userIdStr);
+            var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var result = await _callService.JoinCall(request.GroupId, userId.ToString());
             
             if (result.Success)
             {
@@ -86,8 +91,10 @@ public class CallsController : ControllerBase
     {
         try
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
-            var success = await _callService.EndCall(request.GroupId, userIdStr);
+            var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var success = await _callService.EndCall(request.GroupId, userId.ToString());
             
             if (success)
             {
@@ -129,8 +136,10 @@ public class CallsController : ControllerBase
     {
         try
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
-            var result = await _callService.GetUserCallStats(userIdStr);
+            var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var result = await _callService.GetUserCallStats(userId.ToString());
             
             if (result.Success)
             {

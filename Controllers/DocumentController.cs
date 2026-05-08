@@ -10,9 +10,10 @@ using SkillShareBackend.Services;
 
 namespace SkillShareBackend.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class DocumentController : ControllerBase
+public class DocumentController : BaseController
 {
     private readonly AppDbContext _context;
     private readonly IWebHostEnvironment _environment;
@@ -32,40 +33,6 @@ public class DocumentController : ControllerBase
         _firebaseStorageService = firebaseStorageService;
     }
 
-    /// <summary>
-    ///     Gets the current user's ID from the JWT token
-    /// </summary>
-    // En el método GetUserId(), hay un problema con la extracción del UserId
-    private int GetUserId()
-    {
-        try
-        {
-            var userIdClaim = User.FindFirst("uid")?.Value
-                              ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("userId")?.Value
-                              ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                _logger.LogWarning("No user ID claim found in token. Using default user ID: 1");
-                return 1; // ID por defecto para desarrollo
-            }
-
-            if (!int.TryParse(userIdClaim, out var userId))
-            {
-                _logger.LogWarning($"Failed to parse user ID from claim: {userIdClaim}. Using default user ID: 1");
-                return 1;
-            }
-
-            return userId;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error extracting user ID from token. Using default user ID: 1");
-            return 1;
-        }
-    }
-
     // GET: api/document/statistics/global
     [HttpGet("statistics/global")]
     public async Task<ActionResult<object>> GetGlobalStatistics()
@@ -73,6 +40,7 @@ public class DocumentController : ControllerBase
         try
         {
             var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
 
             var totalDocuments = await _context.GroupDocuments.CountAsync();
             var userDocuments = await _context.GroupDocuments.CountAsync(d => d.UserId == userId);
@@ -99,12 +67,19 @@ public class DocumentController : ControllerBase
         try
         {
             var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            _logger.LogInformation("Getting documents for group {GroupId} and user {UserId}", groupId, userId);
 
             // Verify user is a member of the group
             var isMember = await _context.GroupMembers
                 .AnyAsync(gm => gm.GroupId == groupId && gm.UserId == userId);
 
-            if (!isMember) return Forbid();
+            if (!isMember) 
+            {
+                _logger.LogWarning("User {UserId} is not a member of group {GroupId}", userId, groupId);
+                return Forbid();
+            }
 
             var documents = await _context.GroupDocuments
                 .Where(d => d.GroupId == groupId)
@@ -116,8 +91,9 @@ public class DocumentController : ControllerBase
                 {
                     Id = d.Id,
                     GroupId = d.GroupId,
+                    GroupName = d.Group != null ? d.Group.Name : "Unknown",
                     UserId = d.UserId,
-                    UserEmail = d.User!.Email,
+                    UserEmail = d.User != null ? d.User.Email : "Unknown",
                     Title = d.Title,
                     Description = d.Description,
                     FileName = d.FileName,
@@ -136,14 +112,10 @@ public class DocumentController : ControllerBase
 
             return Ok(documents);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting documents for group {GroupId}", groupId);
-            return StatusCode(500, new { message = "Internal server error" });
+            return StatusCode(500, new { message = "Internal server error", error = ex.Message });
         }
     }
 
@@ -156,6 +128,8 @@ public class DocumentController : ControllerBase
             _logger.LogInformation("📥 GET /api/document/user called");
 
             var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
+            
             _logger.LogInformation($"🔑 User ID: {userId}");
 
             var documents = await _context.GroupDocuments
@@ -168,9 +142,9 @@ public class DocumentController : ControllerBase
                 {
                     Id = d.Id,
                     GroupId = d.GroupId,
-                    GroupName = d.Group!.Name,
+                    GroupName = d.Group != null ? d.Group.Name : "Unknown",
                     UserId = d.UserId,
-                    UserEmail = d.User!.Email,
+                    UserEmail = d.User != null ? d.User.Email : "Unknown",
                     Title = d.Title,
                     Description = d.Description,
                     FileName = d.FileName,
@@ -189,11 +163,6 @@ public class DocumentController : ControllerBase
 
             _logger.LogInformation($"📄 Found {documents.Count} documents for user {userId}");
             return Ok(documents);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogError(ex, "❌ Unauthorized access");
-            return Unauthorized(new { message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -214,6 +183,7 @@ public class DocumentController : ControllerBase
         try
         {
             var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
 
             var favoriteDocuments = await _context.DocumentFavorites
                 .Where(df => df.UserId == userId)
@@ -228,9 +198,9 @@ public class DocumentController : ControllerBase
                 {
                     Id = df.Document.Id,
                     GroupId = df.Document.GroupId,
-                    GroupName = df.Document.Group!.Name,
+                    GroupName = df.Document.Group != null ? df.Document.Group.Name : "Unknown",
                     UserId = df.Document.UserId,
-                    UserEmail = df.Document.User!.Email,
+                    UserEmail = df.Document.User != null ? df.Document.User.Email : "Unknown",
                     Title = df.Document.Title,
                     Description = df.Document.Description,
                     FileName = df.Document.FileName,
@@ -248,10 +218,6 @@ public class DocumentController : ControllerBase
 
             return Ok(favoriteDocuments);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting favorite documents");
@@ -266,6 +232,7 @@ public class DocumentController : ControllerBase
         try
         {
             var userId = GetUserId();
+            if (userId == 0) return Unauthorized();
 
             var document = await _context.GroupDocuments
                 .Include(d => d.User)
@@ -288,9 +255,9 @@ public class DocumentController : ControllerBase
             {
                 Id = document.Id,
                 GroupId = document.GroupId,
-                GroupName = document.Group?.Name,
+                GroupName = document.Group?.Name ?? "Unknown",
                 UserId = document.UserId,
-                UserEmail = document.User!.Email,
+                UserEmail = document.User?.Email ?? "Unknown",
                 Title = document.Title,
                 Description = document.Description,
                 FileName = document.FileName,
@@ -298,7 +265,7 @@ public class DocumentController : ControllerBase
                 FileSize = document.FileSize,
                 FileType = document.FileType,
                 SubjectId = document.SubjectId,
-                SubjectName = document.Subject?.Name,
+                SubjectName = document.Subject?.Name ?? "General",
                 UploadDate = document.UploadDate,
                 DownloadCount = document.DownloadCount,
                 FavoriteCount = document.FavoriteCount ?? 0,
@@ -306,10 +273,6 @@ public class DocumentController : ControllerBase
             };
 
             return Ok(dto);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
         }
         catch (Exception ex)
         {

@@ -10,9 +10,10 @@ using SkillShareBackend.Services;
 
 namespace SkillShareBackend.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class StudyGroupController : ControllerBase
+public class StudyGroupController : BaseController
 {
     private readonly AppDbContext _context;
     private readonly IGroupManagementService _groupManagementService;
@@ -26,36 +27,6 @@ public class StudyGroupController : ControllerBase
         _context = context;
         _groupManagementService = groupManagementService;
         _logger = logger;
-    }
-
-    /// <summary>
-    ///     Retrieves authenticated user's ID from JWT token.
-    /// </summary>
-    private int GetUserId()
-    {
-        try
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("uid")?.Value
-                              ?? User.FindFirst("userId")?.Value
-                              ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                return 1; // Default user ID for development
-            }
-
-            if (int.TryParse(userIdClaim, out var userId))
-            {
-                return userId;
-            }
-
-            return 1;
-        }
-        catch (Exception)
-        {
-            return 1;
-        }
     }
 
     #region CRUD Básico (ya existente)
