@@ -8,7 +8,7 @@ RUN dotnet restore
 
 # 2. Ahora copiamos todo lo demás y compilamos
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish SkillShareBackend.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
