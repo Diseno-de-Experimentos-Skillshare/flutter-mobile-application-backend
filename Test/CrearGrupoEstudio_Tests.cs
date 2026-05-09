@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using SkillShareBackend.Data;
 using SkillShareBackend.DTOs;
 using SkillShareBackend.Models;
@@ -15,16 +15,14 @@ namespace SkillShareBackend.Tests;
 /// gestión de miembros y roles.
 /// Incluye 4 pruebas unitarias y 2 pruebas integrales.
 /// </summary>
-[TestFixture]
-public class CrearGrupoEstudio_Tests
+public class CrearGrupoEstudio_Tests : IDisposable
 {
     private const string TEST_PASSWORD = "12345678"; 
     private AppDbContext _context = null!;
     private GroupManagementService _groupManagementService = null!;
     private int _testUserId;
 
-    [SetUp]
-    public void Setup()
+    public CrearGrupoEstudio_Tests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -37,8 +35,7 @@ public class CrearGrupoEstudio_Tests
         _testUserId = SeedUserAndGetId();
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _context?.Dispose();
     }
@@ -51,9 +48,9 @@ public class CrearGrupoEstudio_Tests
     /// Test Unitario 1: Validación de propietario del grupo
     /// Verifica que IsGroupOwner retorna true solo para el creador
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Valida que solo el creador es propietario del grupo")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Valida que solo el creador es propietario del grupo")]
     public async Task IsGroupOwner_UsuarioPropietario_RetornaTrue()
     {
         // Arrange
@@ -65,16 +62,16 @@ public class CrearGrupoEstudio_Tests
         var esOwner = await _groupManagementService.IsGroupOwner(grupo.Id, _testUserId);
 
         // Assert
-        Assert.That(esOwner, Is.True, "El creador debe ser propietario");
+        Assert.True(esOwner, "El creador debe ser propietario");
     }
 
     /// <summary>
     /// Test Unitario 2: Validación de no propietario
     /// Verifica que IsGroupOwner retorna false para usuarios que no crearon el grupo
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Valida que un usuario no propietario retorna false")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Valida que un usuario no propietario retorna false")]
     public async Task IsGroupOwner_UsuarioNoCreador_RetornaFalse()
     {
         // Arrange
@@ -88,16 +85,16 @@ public class CrearGrupoEstudio_Tests
         var esOwner = await _groupManagementService.IsGroupOwner(grupo.Id, otroUsuarioId);
 
         // Assert
-        Assert.That(esOwner, Is.False, "Un usuario que no es creador no debe ser propietario");
+        Assert.False(esOwner, "Un usuario que no es creador no debe ser propietario");
     }
 
     /// <summary>
     /// Test Unitario 3: Verificación de rol de administrador
     /// Verifica que IsGroupAdmin identifica correctamente a los administradores
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Valida identificación de administradores")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Valida identificación de administradores")]
     public async Task IsGroupAdmin_MiembroConRolAdmin_RetornaTrue()
     {
         // Arrange
@@ -109,7 +106,7 @@ public class CrearGrupoEstudio_Tests
         {
             GroupId = grupo.Id,
             UserId = _testUserId,
-            Role = "member"
+            Role = "admin"
         };
         _context.GroupMembers.Add(miembro);
         await _context.SaveChangesAsync();
@@ -118,16 +115,16 @@ public class CrearGrupoEstudio_Tests
         var esAdmin = await _groupManagementService.IsGroupAdmin(grupo.Id, _testUserId);
 
         // Assert
-        Assert.That(esAdmin, Is.True, "Un miembro con rol admin debe ser identificado");
+        Assert.True(esAdmin, "Un miembro con rol admin debe ser identificado");
     }
 
     /// <summary>
     /// Test Unitario 4: Permisos de un usuario en el grupo
     /// Verifica que GetUserPermissions retorna los permisos correctos
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Valida permisos del propietario del grupo")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Valida permisos del propietario del grupo")]
     public async Task GetUserPermissions_Propietario_TieneTodosLosPermisos()
     {
         // Arrange
@@ -147,12 +144,12 @@ public class CrearGrupoEstudio_Tests
         var permisos = await _groupManagementService.GetUserPermissions(grupo.Id, _testUserId);
 
         // Assert
-        Assert.That(permisos, Is.Not.Null);
-        Assert.That(permisos.IsOwner, Is.True, "Debe ser propietario");
-        Assert.That(permisos.IsAdmin, Is.True, "Debe ser administrador");
-        Assert.That(permisos.IsMember, Is.True, "Debe ser miembro");
-        Assert.That(permisos.CanDeleteGroup, Is.True, "Debe poder borrar el grupo");
-        Assert.That(permisos.CanTransferOwnership, Is.True, "Debe poder transferir propiedad");
+        Assert.NotNull(permisos);
+        Assert.True(permisos.IsOwner, "Debe ser propietario");
+        Assert.True(permisos.IsAdmin, "Debe ser administrador");
+        Assert.True(permisos.IsMember, "Debe ser miembro");
+        Assert.True(permisos.CanDeleteGroup, "Debe poder borrar el grupo");
+        Assert.True(permisos.CanTransferOwnership, "Debe poder transferir propiedad");
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -163,9 +160,9 @@ public class CrearGrupoEstudio_Tests
     /// Test Integral 1: Creación y persistencia de grupo
     /// Verifica que un grupo se cree correctamente y se persista en BD
     /// </summary>
-    [Test]
-    [Category("Integral")]
-    [Description("Verifica creación y persistencia de grupo en BD")]
+    [Fact]
+    [Trait("Category", "Integral")]
+    [Trait("Description", "Verifica creación y persistencia de grupo en BD")]
     public async Task CrearGrupo_ConDatos_PersisticaCorrectamente()
     {
         // Arrange
@@ -185,19 +182,19 @@ public class CrearGrupoEstudio_Tests
             .FirstOrDefaultAsync(g => g.Id == grupo.Id);
 
         // Assert
-        Assert.That(grupoRecuperado, Is.Not.Null);
-        Assert.That(grupoRecuperado!.Name, Is.EqualTo("Grupo de Matemáticas Avanzadas"));
-        Assert.That(grupoRecuperado.CreatedBy, Is.EqualTo(_testUserId));
-        Assert.That(grupoRecuperado.Description, Is.EqualTo("Grupo para estudiar cálculo y álgebra lineal"));
+        Assert.NotNull(grupoRecuperado);
+        Assert.Equal("Grupo de Matemáticas Avanzadas", grupoRecuperado!.Name);
+        Assert.Equal(_testUserId, grupoRecuperado.CreatedBy);
+        Assert.Equal("Grupo para estudiar cálculo y álgebra lineal", grupoRecuperado.Description);
     }
 
     /// <summary>
     /// Test Integral 2: Transferencia de propiedad
     /// Verifica que la propiedad se transfiera correctamente entre miembros
     /// </summary>
-    [Test]
-    [Category("Integral")]
-    [Description("Verifica transferencia de propiedad del grupo")]
+    [Fact]
+    [Trait("Category", "Integral")]
+    [Trait("Description", "Verifica transferencia de propiedad del grupo")]
     public async Task TransferirPropiedad_AUnMiembroExistente_CambiaElPropietario()
     {
         // Arrange
@@ -226,9 +223,9 @@ public class CrearGrupoEstudio_Tests
             .FirstOrDefaultAsync(m => m.UserId == nuevoOwner && m.GroupId == grupo.Id);
 
         // Assert
-        Assert.That(resultado, Is.True, "La transferencia debe ser exitosa");
-        Assert.That(grupoActualizado!.CreatedBy, Is.EqualTo(nuevoOwner), "El nuevo propietario debe estar asignado");
-        Assert.That(miembroActualizado!.Role, Is.EqualTo("admin"), "El nuevo propietario debe ser admin");
+        Assert.True(resultado, "La transferencia debe ser exitosa");
+        Assert.Equal(nuevoOwner, grupoActualizado!.CreatedBy);
+        Assert.Equal("admin", miembroActualizado!.Role);
     }
 
     // ════════════════════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using SkillShareBackend.Data;
 using SkillShareBackend.DTOs;
 using SkillShareBackend.Models;
@@ -15,16 +15,14 @@ namespace SkillShareBackend.Tests;
 /// restricciones de formato y unicidad del perfil por usuario.
 /// Incluye 4 pruebas unitarias y 2 pruebas integrales.
 /// </summary>
-[TestFixture]
-public class CrearPerfilEstudiante_Tests
+public class CrearPerfilEstudiante_Tests : IDisposable
 {
     private const string TEST_PASSWORD = "12345678"; 
     private AppDbContext _context = null!;
     private StudentService _studentService = null!;
     private int _testUserId;
 
-    [SetUp]
-    public void Setup()
+    public CrearPerfilEstudiante_Tests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -37,8 +35,7 @@ public class CrearPerfilEstudiante_Tests
         _testUserId = SeedUserAndGetId();
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _context?.Dispose();
     }
@@ -51,9 +48,9 @@ public class CrearPerfilEstudiante_Tests
     /// Test Unitario 1: Validación de nombres - Solo acepta letras
     /// Verifica que FirstName y LastName solo acepten caracteres alfabéticos
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Valida que FirstName y LastName solo acepten letras")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Valida que FirstName y LastName solo acepten letras")]
     public async Task CreateStudent_NombresConNumeros_NoDebeAceptar()
     {
         // Arrange
@@ -69,17 +66,17 @@ public class CrearPerfilEstudiante_Tests
         var resultado = await _studentService.CreateStudentAsync(dtoInvalido);
         
         // Assert - La creación se realiza (la validación es en controller)
-        Assert.That(resultado, Is.Not.Null);
-        Assert.That(resultado.FirstName, Is.EqualTo("Andres"));
+        Assert.NotNull(resultado);
+        Assert.Equal("Andres", resultado.FirstName);
     }
 
     /// <summary>
     /// Test Unitario 2: Creación exitosa con datos completos
     /// Verifica que se cree correctamente un perfil con todos los campos
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Crea un perfil estudiante con datos completos")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Crea un perfil estudiante con datos completos")]
     public async Task CreateStudent_ConDatosCompletos_RetornaEstudianteConDatos()
     {
         // Arrange
@@ -100,23 +97,23 @@ public class CrearPerfilEstudiante_Tests
         var resultado = await _studentService.CreateStudentAsync(dto);
 
         // Assert
-        Assert.That(resultado, Is.Not.Null);
-        Assert.That(resultado.Id, Is.GreaterThan(0), "El estudiante debe tener un ID asignado");
-        Assert.That(resultado.FirstName, Is.EqualTo("Fatima"));
-        Assert.That(resultado.LastName, Is.EqualTo("Urbina"));
-        Assert.That(resultado.Nickname, Is.EqualTo("FatimaU"));
-        Assert.That(resultado.Country, Is.EqualTo("Perú"));
-        Assert.That(resultado.Gender, Is.EqualTo("female"));
-        Assert.That(resultado.UserId, Is.EqualTo(_testUserId));
+        Assert.NotNull(resultado);
+        Assert.True(resultado.Id > 0, "El estudiante debe tener un ID asignado");
+        Assert.Equal("Fatima", resultado.FirstName);
+        Assert.Equal("Urbina", resultado.LastName);
+        Assert.Equal("FatimaU", resultado.Nickname);
+        Assert.Equal("Perú", resultado.Country);
+        Assert.Equal("female", resultado.Gender);
+        Assert.Equal(_testUserId, resultado.UserId);
     }
 
     /// <summary>
     /// Test Unitario 3: Creación con datos mínimos
     /// Verifica que se pueda crear un perfil con solo campos obligatorios
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [Description("Crea un perfil con datos mínimos")]
+    [Fact]
+    [Trait("Category", "Unitario")]
+    [Trait("Description", "Crea un perfil con datos mínimos")]
     public async Task CreateStudent_ConCamposMinimos_RetornaEstudianteConValoresPorDefecto()
     {
         // Arrange - solo campos obligatorios
@@ -132,25 +129,24 @@ public class CrearPerfilEstudiante_Tests
         var resultado = await _studentService.CreateStudentAsync(dto);
 
         // Assert
-        Assert.That(resultado, Is.Not.Null);
-        Assert.That(resultado.FirstName, Is.EqualTo("Carlos"));
-        Assert.That(resultado.LastName, Is.EqualTo("Pérez"));
-        Assert.That(resultado.Nickname, Is.Null, "El nickname es opcional");
-        Assert.That(resultado.Country, Is.Null, "El país es opcional");
-        Assert.That(resultado.EducationalCenter, Is.Null, "El centro educativo es opcional");
-        Assert.That(resultado.Gender, Is.EqualTo("male"));
+        Assert.NotNull(resultado);
+        Assert.Equal("Carlos", resultado.FirstName);
+        Assert.Equal("Pérez", resultado.LastName);
+        Assert.Null(resultado.Nickname);
+        Assert.Null(resultado.Country);
+        Assert.Null(resultado.EducationalCenter);
+        Assert.Equal("male", resultado.Gender);
     }
 
     /// <summary>
     /// Test Unitario 4: Validación de géneros permitidos
     /// Verifica que solo se acepten géneros válidos: male, female, other, prefer_not_to_say
     /// </summary>
-    [Test]
-    [Category("Unitario")]
-    [TestCase("male")]
-    [TestCase("female")]
-    [TestCase("other")]
-    [Description("Valida géneros permitidos")]
+    [Theory]
+    [InlineData("male")]
+    [InlineData("female")]
+    [InlineData("other")]
+    [Trait("Description", "Valida géneros permitidos")]
     public async Task CreateStudent_ConGenerosValidos_Exitoso(string genero)
     {
         // Arrange
@@ -166,8 +162,8 @@ public class CrearPerfilEstudiante_Tests
         var resultado = await _studentService.CreateStudentAsync(dto);
 
         // Assert
-        Assert.That(resultado, Is.Not.Null);
-        Assert.That(resultado.Gender, Is.EqualTo(genero));
+        Assert.NotNull(resultado);
+        Assert.Equal(genero, resultado.Gender);
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -178,9 +174,9 @@ public class CrearPerfilEstudiante_Tests
     /// Test Integral 1: Persistencia en base de datos
     /// Verifica que el perfil se guarde correctamente y se pueda recuperar por ID
     /// </summary>
-    [Test]
-    [Category("Integral")]
-    [Description("Verifica persistencia y recuperación por ID")]
+    [Fact]
+    [Trait("Category", "Integral")]
+    [Trait("Description", "Verifica persistencia y recuperación por ID")]
     public async Task CreateStudent_PersisticaEnBD_RecuperablePorId()
     {
         // Arrange
@@ -200,21 +196,21 @@ public class CrearPerfilEstudiante_Tests
         var recuperado = await _studentService.GetStudentByIdAsync(creado.Id);
 
         // Assert
-        Assert.That(recuperado, Is.Not.Null);
-        Assert.That(recuperado!.Id, Is.EqualTo(creado.Id));
-        Assert.That(recuperado.FirstName, Is.EqualTo(dto.FirstName));
-        Assert.That(recuperado.LastName, Is.EqualTo(dto.LastName));
-        Assert.That(recuperado.Nickname, Is.EqualTo(dto.Nickname));
-        Assert.That(recuperado.Country, Is.EqualTo(dto.Country));
+        Assert.NotNull(recuperado);
+        Assert.Equal(creado.Id, recuperado!.Id);
+        Assert.Equal(dto.FirstName, recuperado.FirstName);
+        Assert.Equal(dto.LastName, recuperado.LastName);
+        Assert.Equal(dto.Nickname, recuperado.Nickname);
+        Assert.Equal(dto.Country, recuperado.Country);
     }
 
     /// <summary>
     /// Test Integral 2: Relación entre Usuario y Estudiante
     /// Verifica que se pueda recuperar el perfil mediante el UserId
     /// </summary>
-    [Test]
-    [Category("Integral")]
-    [Description("Verifica recuperación por UserId")]
+    [Fact]
+    [Trait("Category", "Integral")]
+    [Trait("Description", "Verifica recuperación por UserId")]
     public async Task CreateStudent_RelacionUsuarioEstudiante_RecuperablePorUserId()
     {
         // Arrange
@@ -231,10 +227,10 @@ public class CrearPerfilEstudiante_Tests
         var recuperado = await _studentService.GetStudentByUserIdAsync(_testUserId);
 
         // Assert
-        Assert.That(recuperado, Is.Not.Null);
-        Assert.That(recuperado!.UserId, Is.EqualTo(_testUserId));
-        Assert.That(recuperado.FirstName, Is.EqualTo(dto.FirstName));
-        Assert.That(recuperado.LastName, Is.EqualTo(dto.LastName));
+        Assert.NotNull(recuperado);
+        Assert.Equal(_testUserId, recuperado!.UserId);
+        Assert.Equal(dto.FirstName, recuperado.FirstName);
+        Assert.Equal(dto.LastName, recuperado.LastName);
     }
 
     // ════════════════════════════════════════════════════════════════════════
