@@ -24,8 +24,8 @@ internal static class TestDbHelper
     {
         var user = new User
         {
-            Email     = email ?? $"user_{Guid.NewGuid():N}@test.com",
-            Password  = BCrypt.Net.BCrypt.HashPassword("Pass123!"),
+            Email = email ?? $"user_{Guid.NewGuid():N}@test.com",
+            Password = BCrypt.Net.BCrypt.HashPassword("Pass123!"),
             CreatedAt = DateTime.UtcNow
         };
         ctx.Users.Add(user);
@@ -45,11 +45,11 @@ internal static class TestDbHelper
     {
         var group = new StudyGroup
         {
-            Name        = name,
+            Name = name,
             Description = "Descripción de prueba",
-            CreatedBy   = createdBy,
-            SubjectId   = subjectId,
-            CreatedAt   = DateTime.UtcNow
+            CreatedBy = createdBy,
+            SubjectId = subjectId,
+            CreatedAt = DateTime.UtcNow
         };
         ctx.StudyGroups.Add(group);
         ctx.SaveChanges();
@@ -81,16 +81,16 @@ internal static class TestDbHelper
 /// </summary>
 public class Sprint04_CrearGrupoEstudio_Tests : IDisposable
 {
-    private readonly AppDbContext              _context;
-    private readonly GroupManagementService   _groupService;
-    private readonly User                     _owner;
+    private readonly AppDbContext _context;
+    private readonly GroupManagementService _groupService;
+    private readonly User _owner;
 
     public Sprint04_CrearGrupoEstudio_Tests()
     {
-        _context      = TestDbHelper.CreateInMemoryContext();
-        var logger    = new Mock<ILogger<GroupManagementService>>().Object;
+        _context = TestDbHelper.CreateInMemoryContext();
+        var logger = new Mock<ILogger<GroupManagementService>>().Object;
         _groupService = new GroupManagementService(_context, logger);
-        _owner        = TestDbHelper.SeedUser(_context);
+        _owner = TestDbHelper.SeedUser(_context);
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class Sprint04_CrearGrupoEstudio_Tests : IDisposable
     public async Task IsGroupOwner_ConOtroUsuario_RetornaFalse()
     {
         // Arrange
-        var otro  = TestDbHelper.SeedUser(_context);
+        var otro = TestDbHelper.SeedUser(_context);
         var grupo = TestDbHelper.SeedGroup(_context, _owner.UserId);
 
         // Act
@@ -249,14 +249,14 @@ public class Sprint04_CrearGrupoEstudio_Tests : IDisposable
 public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
 {
     private readonly AppDbContext _context;
-    private readonly User         _owner;
-    private readonly StudyGroup   _grupo;
+    private readonly User _owner;
+    private readonly StudyGroup _grupo;
 
     public Sprint05_UnirseGrupoEstudio_Tests()
     {
         _context = TestDbHelper.CreateInMemoryContext();
-        _owner   = TestDbHelper.SeedUser(_context);
-        _grupo   = TestDbHelper.SeedGroup(_context, _owner.UserId, "Grupo de Física");
+        _owner = TestDbHelper.SeedUser(_context);
+        _grupo = TestDbHelper.SeedGroup(_context, _owner.UserId, "Grupo de Física");
     }
 
     [Fact]
@@ -272,8 +272,8 @@ public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
         var membership = new GroupMember
         {
             GroupId = _grupo.Id,
-            UserId  = nuevoUsuario.UserId,
-            Role    = "member"
+            UserId = nuevoUsuario.UserId,
+            Role = "member"
         };
         _context.GroupMembers.Add(membership);
         await _context.SaveChangesAsync();
@@ -310,7 +310,7 @@ public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
     public async Task JoinGroup_GrupoInexistente_NoDebeCrearMembresia()
     {
         // Arrange
-        var usuario     = TestDbHelper.SeedUser(_context);
+        var usuario = TestDbHelper.SeedUser(_context);
         const int idFalso = 99999;
 
         // Act
@@ -331,8 +331,8 @@ public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
         var memb = new GroupMember
         {
             GroupId = _grupo.Id,
-            UserId  = usuario.UserId,
-            Role    = "member"    // el controller siempre pone "member" al unirse
+            UserId = usuario.UserId,
+            Role = "member"    // el controller siempre pone "member" al unirse
         };
         _context.GroupMembers.Add(memb);
         await _context.SaveChangesAsync();
@@ -390,9 +390,9 @@ public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
     public async Task IsGroupAdmin_MiembroNormal_RetornaFalse()
     {
         // Arrange
-        var logger   = new Mock<ILogger<GroupManagementService>>().Object;
-        var service  = new GroupManagementService(_context, logger);
-        var usuario  = TestDbHelper.SeedUser(_context);
+        var logger = new Mock<ILogger<GroupManagementService>>().Object;
+        var service = new GroupManagementService(_context, logger);
+        var usuario = TestDbHelper.SeedUser(_context);
         TestDbHelper.AddMember(_context, _grupo.Id, usuario.UserId, "member");
 
         // Act
@@ -417,28 +417,28 @@ public class Sprint05_UnirseGrupoEstudio_Tests : IDisposable
 public class Sprint06_SubirDocumentos_Tests : IDisposable
 {
     private readonly AppDbContext _context;
-    private readonly User         _uploader;
-    private readonly StudyGroup   _grupo;
+    private readonly User _uploader;
+    private readonly StudyGroup _grupo;
 
     public Sprint06_SubirDocumentos_Tests()
     {
-        _context  = TestDbHelper.CreateInMemoryContext();
+        _context = TestDbHelper.CreateInMemoryContext();
         _uploader = TestDbHelper.SeedUser(_context);
-        _grupo    = TestDbHelper.SeedGroup(_context, _uploader.UserId, "Grupo Documentos");
+        _grupo = TestDbHelper.SeedGroup(_context, _uploader.UserId, "Grupo Documentos");
     }
 
     private GroupDocument CrearDocumento(string nombre = "apuntes.pdf", string url = "https://storage.test/apuntes.pdf")
     {
         var doc = new GroupDocument
         {
-            GroupId      = _grupo.Id,
-            UserId       = _uploader.UserId,
-            Title        = Path.GetFileNameWithoutExtension(nombre),
-            FileName     = nombre,
-            FileUrl      = url,
-            FileType     = "application/pdf",
-            FileSize     = 204800,   // 200 KB
-            UploadDate   = DateTime.UtcNow
+            GroupId = _grupo.Id,
+            UserId = _uploader.UserId,
+            Title = Path.GetFileNameWithoutExtension(nombre),
+            FileName = nombre,
+            FileUrl = url,
+            FileType = "application/pdf",
+            FileSize = 204800,   // 200 KB
+            UploadDate = DateTime.UtcNow
         };
         _context.GroupDocuments.Add(doc);
         _context.SaveChanges();
@@ -549,22 +549,22 @@ public class Sprint06_SubirDocumentos_Tests : IDisposable
     [Trait("Sprint", "06")]
     [Trait("Funcionalidad", "Subir Documentos")]
     [Trait("Tipo", "Tipos de Archivo")]
-    [InlineData("application/pdf",  "examen.pdf")]
+    [InlineData("application/pdf", "examen.pdf")]
     [InlineData("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "tarea.docx")]
-    [InlineData("image/png",        "diagrama.png")]
-    [InlineData("image/jpeg",       "foto.jpg")]
+    [InlineData("image/png", "diagrama.png")]
+    [InlineData("image/jpeg", "foto.jpg")]
     public void UploadDocument_DiversosTiposDeArchivo_SeAlmacenanCorrectamente(string mimeType, string fileName)
     {
         // Arrange
         var doc = new GroupDocument
         {
-            GroupId    = _grupo.Id,
-            UserId     = _uploader.UserId,
-            Title      = Path.GetFileNameWithoutExtension(fileName),
-            FileName   = fileName,
-            FileUrl    = $"https://storage.test/{fileName}",
-            FileType   = mimeType,
-            FileSize   = 1024,
+            GroupId = _grupo.Id,
+            UserId = _uploader.UserId,
+            Title = Path.GetFileNameWithoutExtension(fileName),
+            FileName = fileName,
+            FileUrl = $"https://storage.test/{fileName}",
+            FileType = mimeType,
+            FileSize = 1024,
             UploadDate = DateTime.UtcNow
         };
         _context.GroupDocuments.Add(doc);
@@ -585,13 +585,13 @@ public class Sprint06_SubirDocumentos_Tests : IDisposable
         const long cincoMB = 5L * 1024 * 1024;
         var doc = new GroupDocument
         {
-            GroupId    = _grupo.Id,
-            UserId     = _uploader.UserId,
-            Title      = "grande",
-            FileName   = "grande.pdf",
-            FileUrl    = "https://storage.test/grande.pdf",
-            FileType   = "application/pdf",
-            FileSize   = cincoMB,
+            GroupId = _grupo.Id,
+            UserId = _uploader.UserId,
+            Title = "grande",
+            FileName = "grande.pdf",
+            FileUrl = "https://storage.test/grande.pdf",
+            FileType = "application/pdf",
+            FileSize = cincoMB,
             UploadDate = DateTime.UtcNow
         };
         _context.GroupDocuments.Add(doc);
@@ -615,21 +615,21 @@ public class Sprint06_SubirDocumentos_Tests : IDisposable
 /// </summary>
 public class Sprint07_EditarInformacionGrupo_Tests : IDisposable
 {
-    private readonly AppDbContext           _context;
+    private readonly AppDbContext _context;
     private readonly GroupManagementService _groupService;
-    private readonly User                   _admin;
-    private readonly User                   _miembro;
-    private readonly StudyGroup             _grupo;
+    private readonly User _admin;
+    private readonly User _miembro;
+    private readonly StudyGroup _grupo;
 
     public Sprint07_EditarInformacionGrupo_Tests()
     {
-        _context      = TestDbHelper.CreateInMemoryContext();
-        var logger    = new Mock<ILogger<GroupManagementService>>().Object;
+        _context = TestDbHelper.CreateInMemoryContext();
+        var logger = new Mock<ILogger<GroupManagementService>>().Object;
         _groupService = new GroupManagementService(_context, logger);
 
-        _admin  = TestDbHelper.SeedUser(_context);
+        _admin = TestDbHelper.SeedUser(_context);
         _miembro = TestDbHelper.SeedUser(_context);
-        _grupo  = TestDbHelper.SeedGroup(_context, _admin.UserId, "Grupo Original");
+        _grupo = TestDbHelper.SeedGroup(_context, _admin.UserId, "Grupo Original");
         TestDbHelper.AddMember(_context, _grupo.Id, _miembro.UserId, "member");
     }
 
@@ -794,6 +794,7 @@ public class Sprint07_EditarInformacionGrupo_Tests : IDisposable
         permisos.IsMember.Should().BeTrue();
         permisos.IsAdmin.Should().BeFalse();
     }
+
 
     public void Dispose() => _context.Dispose();
 }
