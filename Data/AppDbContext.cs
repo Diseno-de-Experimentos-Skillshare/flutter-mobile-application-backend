@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SkillShareBackend.Models;
 
 namespace SkillShareBackend.Data;
@@ -113,6 +113,8 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Password).HasColumnName("password").IsRequired().HasMaxLength(255);
             entity.Property(u => u.ProfileImage).HasColumnName("profile_image").HasMaxLength(500).IsRequired(false);
             entity.Property(u => u.CreatedAt).HasColumnName("created_at").IsRequired();
+            entity.Property(u => u.FcmToken).HasColumnName("fcm_token").HasMaxLength(500).IsRequired(false);
+            entity.Property(u => u.SessionRemindersEnabled).HasColumnName("session_reminders_enabled").HasDefaultValue(false);
             entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
         });
 

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -6,14 +6,22 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using SkillShareBackend.Data;
 using SkillShareBackend.Services;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseSentry(options =>
+{
+    options.Dsn = builder.Configuration["Sentry:Dsn"];
+    options.TracesSampleRate = 0.2;
+});
 
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") 
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 30))));
 
 builder.Environment.WebRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 
@@ -33,6 +41,7 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<ChatWebSocketHandler>();
 builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddCors(options =>
 {
@@ -86,6 +95,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
+
+// Initialize FirebaseApp for FCM
+var firebaseConfigJson = builder.Configuration["GOOGLE_APPLICATION_CREDENTIALS_JSON"] 
+                         ?? builder.Configuration["Firebase:Config"];
+
+try
+{
+    if (FirebaseApp.DefaultInstance == null)
+    {
+        if (!string.IsNullOrEmpty(firebaseConfigJson))
+        {
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = GoogleCredential.FromJson(firebaseConfigJson)
+            });
+        }
+        else
+        {
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = GoogleCredential.GetApplicationDefault()
+            });
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ FirebaseApp initialization skipped/failed: {ex.Message}");
+}
 
 var app = builder.Build();
 
@@ -188,6 +226,13 @@ app.MapGet("/api/debug/uploads", () =>
         wwwrootPath,
         uploadsPath
     };
+});
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+app.MapGet("/api/test-error", () =>
+{
+    throw new Exception("Prueba crítica de Sentry para demostración");
 });
 
 app.MapGet("/", () => "🚀 SkillShare Flutter Backend is Running!");

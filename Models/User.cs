@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SkillShareBackend.Models;
@@ -22,4 +22,8 @@ public class User
     [Column("profile_image")] public string? ProfileImage { get; set; }
 
     [Column("created_at")] public DateTime CreatedAt { get; set; } // Cambiar de string a DateTime
+
+    [Column("fcm_token")] public string? FcmToken { get; set; }
+
+    [Column("session_reminders_enabled")] public bool SessionRemindersEnabled { get; set; }
 }

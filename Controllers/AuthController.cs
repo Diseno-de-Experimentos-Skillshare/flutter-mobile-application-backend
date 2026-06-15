@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkillShareBackend.Data;
@@ -87,5 +87,49 @@ public class AuthController : ControllerBase
     public IActionResult ValidateToken()
     {
         return Ok(new { message = "Token is valid" });
+    }
+
+    /// <summary>
+    /// Updates the user's FCM token and their session reminders preference.
+    /// </summary>
+    [Authorize]
+    [HttpPost("update-fcm-token")]
+    public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenDto dto)
+    {
+        if (dto == null || string.IsNullOrEmpty(dto.Token))
+        {
+            return BadRequest(new { message = "Token cannot be empty" });
+        }
+
+        try
+        {
+            // Get user ID from claim
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                              ?? User.FindFirst("userId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "Invalid user claims" });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.FcmToken = dto.Token;
+            user.SessionRemindersEnabled = dto.SessionRemindersEnabled;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Updated FCM token and cohort for user {userId}");
+            return Ok(new { message = "FCM token updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating FCM token");
+            return StatusCode(500, new { message = "An error occurred while updating FCM token" });
+        }
     }
 }

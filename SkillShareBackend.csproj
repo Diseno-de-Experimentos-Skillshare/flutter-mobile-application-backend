@@ -35,6 +35,7 @@
 
         <!-- Versión de Pomelo compatible con EF Core 8 -->
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
+        <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
 
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2" />
