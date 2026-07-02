@@ -42,7 +42,7 @@ public class Sprint03_CrearPerfilEstudiante_Tests : IDisposable
     [Trait("Sprint", "03")]
     [Trait("Funcionalidad", "Crear Perfil Estudiante")]
     [Trait("Tipo", "Happy Path")]
-    public async Task CreateStudent_ConDatosCompletos_CreaPerfilExitosamente()
+    public async Task itCreateStudent_ConDatosCompletos_CreaPerfilExitosamente()
     {
         // Arrange
         var dto = new CreateStudentDto

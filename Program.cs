@@ -11,11 +11,25 @@ using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseSentry(options =>
+// Sentry se activa SOLO si hay un DSN configurado (config o variable de entorno).
+// Si no hay DSN, la app arranca igual (el monitoreo nunca debe tumbar el servicio).
+var sentryDsn = builder.Configuration["Sentry:Dsn"]
+                ?? Environment.GetEnvironmentVariable("SENTRY_DSN");
+
+if (!string.IsNullOrWhiteSpace(sentryDsn))
 {
-    options.Dsn = builder.Configuration["Sentry:Dsn"];
-    options.TracesSampleRate = 0.2;
-});
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.TracesSampleRate = 0.2;
+        options.Environment = builder.Environment.EnvironmentName;
+    });
+    Console.WriteLine("✅ Sentry activado.");
+}
+else
+{
+    Console.WriteLine("⚠️ Sentry deshabilitado: no se encontró Sentry:Dsn ni SENTRY_DSN.");
+}
 
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") 
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
@@ -42,6 +56,7 @@ builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<ChatWebSocketHandler>();
 builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddCors(options =>
 {
