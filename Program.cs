@@ -43,7 +43,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "SkillShare API", Version = "v1" });
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "SkillShare API",
+        Version = "v1",
+        Description = "API del backend de SkillShare — monitoreo (Sentry, /health) y experimentos (EC-01 notificaciones, EC-02 y EC-05 recomendaciones)."
+    });
+
+    // Incluye los comentarios /// <summary> como descripción de cada endpoint.
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath)) c.IncludeXmlComments(xmlPath);
 });
 
 // Servicios registrados
