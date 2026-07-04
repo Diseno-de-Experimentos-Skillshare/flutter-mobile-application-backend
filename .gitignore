@@ -8,3 +8,9 @@ obj/
 *.db
 wwwroot/
 Properties/
+
+# Configuración con credenciales - NO subir
+appsettings.json
+appsettings.Development.json
+firebase-service-account.json
+*firebase-adminsdk*.json
