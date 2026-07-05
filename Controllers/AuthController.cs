@@ -96,9 +96,9 @@ public class AuthController : ControllerBase
     [HttpPost("update-fcm-token")]
     public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenDto dto)
     {
-        if (dto == null || string.IsNullOrEmpty(dto.Token))
+        if (dto == null)
         {
-            return BadRequest(new { message = "Token cannot be empty" });
+            return BadRequest(new { message = "Request body cannot be null" });
         }
 
         try
@@ -118,7 +118,7 @@ public class AuthController : ControllerBase
                 return NotFound(new { message = "User not found" });
             }
 
-            user.FcmToken = dto.Token;
+            user.FcmToken = string.IsNullOrEmpty(dto.Token) ? null : dto.Token;
             user.SessionRemindersEnabled = dto.SessionRemindersEnabled;
 
             await _context.SaveChangesAsync();
